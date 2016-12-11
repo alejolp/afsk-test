@@ -13,6 +13,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy.signal import butter, lfilter
 
+import chebyshev
+
 def butter_lowpass(cutoff, fs, order=5):
     nyq = 0.5 * fs
     normal_cutoff = cutoff / nyq
@@ -23,6 +25,10 @@ def butter_lowpass_filter(data, cutoff, fs, order=5):
     b, a = butter_lowpass(cutoff, fs, order=order)
     y = lfilter(b, a, data)
     return y
+
+def butter_lowpass_filter2(data, cutoff, fs, order=9):
+    A, B = chebyshev.calc(cutoff / (0.5 * fs), 0, 0.0, order)
+    return chebyshev.filter(data, A, B, order)
 
 def main():
 
@@ -53,7 +59,7 @@ def main():
     bps_rate = 1200
     f1 = 1200
     f2 = 2200
-    fcut = 600 # Hz for LPF
+    fcut = 700 # Hz for LPF
 
     L = [-math.cos(2 * math.pi * f1 * (x) / samp_rate) + math.cos(2 * math.pi * f2 * (x) / samp_rate) for x in range(2 * samp_rate / bps_rate)]
     dd = L.index(max(L))
@@ -82,7 +88,7 @@ def main():
 
     B = [A[i] * A[(i + dd) % len(A)] for i in range(len(A))]
 
-    E = butter_lowpass_filter(B, fcut, samp_rate, 3)
+    E = butter_lowpass_filter2(B, fcut, samp_rate)
 
     # Schmitt trigger/hysteresis
 
@@ -108,7 +114,8 @@ def main():
     plt.plot(E, label='E')
     plt.plot(F, label='F')
     #plt.plot([vh * math.sin(2 * math.pi * 1200 * x / samp_rate) for x in range(len(F))], label='Clock')
-    plt.plot([(vh * (int((x + 10) * 1200 / samp_rate) % 2)) for x in range(len(F))], label='Clock', color='m')
+    plt.plot([(vh * (int((x +20) * 1200 / samp_rate) % 2)) for x in range(len(F))], 
+        label='Clock', color='m')
 
     plt.grid()
     plt.legend()

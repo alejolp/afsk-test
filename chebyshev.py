@@ -4,6 +4,15 @@ import math
 def filter(X, A, B, NP):
     Y = [0.0] * len(X)
 
+    k = 0
+    for a, b in zip(A, B):
+        k += 1
+        if not (abs(a) > 1e-16 or abs(b) > 1e-16):
+            break
+
+    #assert k == NP, (k, NP, A, B)
+    NP = k
+    
     for i in range(NP, len(X)):
         for k in range(0, NP+1):
             Y[i] += A[k] * X[i-k]
@@ -65,6 +74,11 @@ def calccoef(FC, LH, PR, NP, P):
 
 # 
 def calc(FC, LH, PR, NP):
+    # FC: Cut Frequency, [0.0, 0.5]
+    # LH: 0=Low Pass, 1=High Pass
+    # PR: Percentage Ripple, [0, 99]
+    # NP: Number of Poles
+    #
     # From: http://www.dspguide.com/ch20.htm
 
     A = [0.0] * 23
