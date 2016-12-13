@@ -26,7 +26,7 @@ def butter_lowpass_filter(data, cutoff, fs, order=5):
     y = lfilter(b, a, data)
     return y
 
-def butter_lowpass_filter2(data, cutoff, fs, order=2):
+def butter_lowpass_filter2(data, cutoff, fs, order=9):
     A, B = chebyshev.calc(cutoff / (0.5 * fs), 0, 0.0, order)
     return chebyshev.filter(data, A, B, order)
 
@@ -39,15 +39,15 @@ def main():
         wth2 = -1e7
         th1 = 1e7
         th2 = -1e7
-        phcorr = 0
+        phcorr = 0-15-12
     elif "audio02.wav" in sys.argv[1]:
         pos_start = 325400
         pos_end = 363900
         wth1 = 100000
         wth2 = -250000
-        th1 = 6e6
-        th2 = -3.5e6
-        phcorr = -20
+        th1 = 10
+        th2 = -10
+        phcorr = -20-22
 
     w = wave.open(sys.argv[1], 'rb')
 
@@ -100,19 +100,24 @@ def main():
 
     E = butter_lowpass_filter2(B, fcut, samp_rate)
 
+    n = len(E)
+    Y = np.fft.fft(E)/n # fft computing and normalization
+    Y = Y[range(n/2)]
+
+
     # Schmitt trigger/hysteresis
 
     if True:
         F = []
         vh = th1
         vl = th2
-        last = vh
+        last = 0
         for x in E:
             if x > th1:
-                last = vh
+                last = 1
             elif x < th2:
-                last = vl
-            F.append(last)
+                last = 0
+            F.append(last * wth1)
     elif False:
         hyst_hist = [0] * (samples_per_bit * 16)
         hyst_hist_idx = 0
@@ -163,12 +168,16 @@ def main():
 
             G.append(last)
 
+    Yfreq = [((1.0 * x / samp_rate) * (samp_rate * 0.5) / 0.5) for x in range(len(Y))]
+
+    #plt.plot(Yfreq, abs(Y), label='fft(E)')
+
     #plt.plot(A, label='A')
     
     #plt.plot(B, label='B')
     plt.plot(E, label='E')
     #plt.hist(E, bins=50, log=True, label='E_hist')
-    #plt.plot(F, label='F')
+    plt.plot(F, label='F')
     #plt.hist(F[1200:18500], bins=50, log=True, label='F_hist')
     #plt.hist(G, bins=50, label='G_hist')
     #plt.plot(G, label='G')
